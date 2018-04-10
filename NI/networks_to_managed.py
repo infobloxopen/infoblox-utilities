@@ -111,6 +111,8 @@ for nv in nv_lst:
         opt = print_and_read_options(['skip (member will be chosen automatically)'] + nv_map[nv])
         if opt != 0:
             discovery_member = nv_map[nv][opt-1]
+        else:
+            discovery_member = nv_map[nv][0]
 
     opt = raw_input('Do you want to leave some networks unmanaged? (y/N)')
     excluded_networks = []
