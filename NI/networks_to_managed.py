@@ -13,6 +13,8 @@ import sys
 import urllib
 import argparse
 
+AUTH_HEADER = ''
+
 
 def read_wapi(conn, url):
     try:
@@ -50,6 +52,7 @@ def print_and_read_options(opts):
 
 
 def main():
+    global AUTH_HEADER
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
 
