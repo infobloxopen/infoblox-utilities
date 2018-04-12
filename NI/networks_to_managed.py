@@ -12,6 +12,7 @@ import base64
 import sys
 import urllib
 import argparse
+import getpass
 
 AUTH_HEADER = ''
 
@@ -62,7 +63,7 @@ def main():
 
     grid_ip = raw_input('Grid Master IP: ')
     user = raw_input('User: ')
-    password = raw_input('Password: ')
+    password = getpass.getpass('Password: ')
 
     conn = httplib.HTTPSConnection(grid_ip, timeout=20,
                                    context=ssl._create_unverified_context())
