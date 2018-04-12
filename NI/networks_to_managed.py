@@ -101,7 +101,7 @@ for nv in nv_lst:
         print 'There\'s %s unmanaged networks in %s network view' % (len(unmanaged), nv)
 
     if len(nv_map[nv]) == 0:
-        print 'No scan interfases assigned to this network view, skipping'
+        print 'No scan interfaces assigned to this network view, skipping'
         continue
     elif len(nv_map[nv]) == 1:
         discovery_member = nv_map[nv][0]
