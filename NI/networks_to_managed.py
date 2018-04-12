@@ -58,14 +58,17 @@ def main():
         sys.exit(1)
 
     global AUTH_HEADER
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="convert unmanaged networks "
+                                                 "to managed networks")
+    parser.add_argument("-v", "--verbosity", help="increase output verbosity",
+                        action="store_true")
     args = parser.parse_args()
 
     grid_ip = raw_input('Grid Master IP: ')
     user = raw_input('User: ')
     password = getpass.getpass('Password: ')
 
-    conn = httplib.HTTPSConnection(grid_ip, timeout=20,
+    conn = httplib.HTTPSConnection(grid_ip, timeout=120,
                                    context=ssl._create_unverified_context())
     auth = base64.encodestring('%s:%s' % (user, password))[:-1]
     AUTH_HEADER = {'Authorization': 'Basic %s' % auth}
@@ -80,7 +83,7 @@ def main():
         'networkview?_return_type=json-pretty&_return_fields=name'
     nv_parsed = read_wapi(conn, nv_url)
     network_views = [x["name"] for x in nv_parsed]
-    print 'You have %s network views configured on Grid.\n ' \
+    print 'You have %s network views configured on Grid.\n' \
           'Do you want to process all of them or select one?' \
           % len(network_views)
     opt = print_and_read_options(['process all'] + network_views)
@@ -149,8 +152,13 @@ def main():
                   '"address/CIDR -- e.g. 10.0.0.0/8" separating with commas:'
             excluded_networks = set(x.strip() for x in raw_input().split(', '))
 
-        refs = [x['_ref'] for x in unmanaged
-                if x['network'] not in excluded_networks]
+        refs = []
+        for x in unmanaged:
+            if x['network'] not in excluded_networks:
+                refs.append(x['_ref'])
+                if args.verbosity:
+                    print 'Processing network %s.' % x['network']
+
         # begin multiupdate
         request_url = wapi_url + 'request'
         post_data = '[' + ', '.join(
