@@ -15,9 +15,11 @@ grid_ip = raw_input('Grid Master IP: ')
 user = raw_input('User: ')
 password = raw_input('Password: ')
 
-conn = httplib.HTTPSConnection(grid_ip, timeout=20, context=ssl._create_unverified_context())
+conn = httplib.HTTPSConnection(grid_ip, timeout=20,
+                               context=ssl._create_unverified_context())
 auth = base64.encodestring('%s:%s' % (user, password))[:-1]
 AUTH_HEADER = {'Authorization': 'Basic %s' % auth}
+
 
 def read_wapi(conn, url):
     try:
@@ -33,6 +35,7 @@ def read_wapi(conn, url):
         print data.status, data.reason
         sys.exit(1)
     return parsed
+
 
 def print_and_read_options(opts):
     print '\n'.join('%s - %s' % (i, name) for i, name in enumerate(opts))
@@ -52,12 +55,14 @@ def print_and_read_options(opts):
         print 'Cancelled'
         sys.exit(0)
 
-schema_url = 'https://%s/wapi/v1.0/?_schema&_return_type=json-pretty' % grid_ip
+schema_url = 'https://%s/wapi/v1.0/?_schema&_return_type=json-pretty' \
+             % grid_ip
 versions = read_wapi(conn, schema_url)
-wapi_v = 'v' + versions['supported_versions'][-1] #get latest
+wapi_v = 'v' + versions['supported_versions'][-1]  # get latest
 wapi_url = 'https://%s/wapi/%s/' % (grid_ip, wapi_v)
 
-nv_url = wapi_url + 'networkview?_return_type=json-pretty&_return_fields=name' 
+nv_url = wapi_url + \
+         'networkview?_return_type=json-pretty&_return_fields=name'
 nv_parsed = read_wapi(conn, nv_url)
 network_views = [x["name"] for x in nv_parsed]
 print '''You have %s network views configured on Grid.
@@ -65,7 +70,9 @@ Do you want to process all of them or select one?''' % len(network_views)
 opt = print_and_read_options(['process all'] + network_views)
 nv_lst = network_views if opt == 0 else [network_views[opt-1]]
 
-mdp_url = wapi_url + 'discovery:memberproperties?_return_fields=discovery_member,scan_interfaces,role&_return_type=json-pretty'
+mdp_url = wapi_url + \
+          'discovery:memberproperties?_return_fields=discovery_member,' \
+          'scan_interfaces,role&_return_type=json-pretty'
 mdp_parsed = read_wapi(conn, mdp_url)
 nv_map = dict([(nv, []) for nv in network_views])
 if any(x['role'] == 'DNP' for x in mdp_parsed):
@@ -86,41 +93,46 @@ for mdp in mdp_parsed:
 for nv in nv_lst:
     print '[%s]' % nv
 
-    nw_params = urllib.urlencode({ 'network_view'  : nv
-                                 , '_return_fields': 'network'
-                                 , 'unmanaged'     : 'true'
-                                 , '_return_type'  : 'json-pretty' })
+    nw_params = urllib.urlencode({'network_view': nv,
+                                  '_return_fields': 'network',
+                                  'unmanaged': 'true',
+                                  '_return_type': 'json-pretty'})
+
     ipv4networks_url = wapi_url + 'network?' + nw_params
     unmanaged = read_wapi(conn, ipv4networks_url)
     ipv6networks_url = wapi_url + 'ipv6network?' + nw_params
     unmanaged += read_wapi(conn, ipv6networks_url)
     if len(unmanaged) == 0:
-        print 'There\'s no unmanaged networks in %s network view, skipping' % nv
+        print 'There\'s no unmanaged networks ' \
+              'in %s network view, skipping.' % nv
         continue
     else:
-        print 'There\'s %s unmanaged networks in %s network view' % (len(unmanaged), nv)
+        print 'There\'s %s unmanaged networks ' \
+              'in "%s" network view.' % (len(unmanaged), nv)
 
     if len(nv_map[nv]) == 0:
-        print 'No scan interfaces assigned to this network view, skipping'
+        print 'No scan interfaces assigned to this network view, skipping.'
         continue
     elif len(nv_map[nv]) == 1:
         discovery_member = nv_map[nv][0]
     else:
-        print 'There\'s 2 discovery members assigned to "default" network view.'
+        print 'There\'s %s discovery members ' \
+              'assigned to "%s" network view.' % (len(nv_map[nv]), nv)
         print 'Which one you want to use for discovery?'
-        opt = print_and_read_options(['skip (member will be chosen automatically)'] + nv_map[nv])
-        if opt != 0:
-            discovery_member = nv_map[nv][opt-1]
-        else:
-            discovery_member = nv_map[nv][0]
+        opt = print_and_read_options(
+            ['skip (member will be chosen automatically)'] + nv_map[nv]
+        )
+        discovery_member = nv_map[nv][0] if opt == 0 else nv_map[nv][opt-1]
 
     opt = raw_input('Do you want to leave some networks unmanaged? (y/N)')
     excluded_networks = []
     if opt == 'y':
-        print 'Please, enumerate networks in form "address/CIDR -- e.g. 10.0.0.0/8" separating with commas:'
+        print 'Please, enumerate networks in form ' \
+              '"address/CIDR -- e.g. 10.0.0.0/8" separating with commas:'
         excluded_networks = set(x.strip() for x in raw_input().split(', '))
 
-    refs = [x['_ref'] for x in unmanaged if x['network'] not in excluded_networks]
+    refs = [x['_ref'] for x in unmanaged
+            if x['network'] not in excluded_networks]
     # begin multiupdate
     request_url = wapi_url + 'request'
     post_data = '[' + ', '.join(
@@ -133,9 +145,10 @@ for nv in nv_lst:
                 "enable_discovery": true
             }
         }''' for ref in refs) + ']'
-    conn.request('POST', request_url, post_data, AUTH_HEADER) # ignoring errors
-    conn.getresponse().read() # makes httplib happy
-    print 'Processing', nv, 'network view finished.'
+    conn.request('POST', request_url,
+                 post_data, AUTH_HEADER)  # ignoring errors
+    conn.getresponse().read()  # makes httplib happy
+    print 'Processing "%s" network view finished.' % nv
 
 print 'Completed!'
 conn.close()
