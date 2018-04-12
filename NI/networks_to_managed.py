@@ -121,7 +121,7 @@ def main():
         unmanaged += read_wapi(conn, ipv6networks_url)
         if len(unmanaged) == 0:
             print 'There\'s no unmanaged networks ' \
-                  'in %s network view, skipping.' % nv
+                  'in "%s" network view, skipping.' % nv
             continue
         else:
             print 'There\'s %s unmanaged networks ' \
