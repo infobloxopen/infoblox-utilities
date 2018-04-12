@@ -52,13 +52,13 @@ def print_and_read_options(opts):
 
 
 def main():
-    global AUTH_HEADER
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args()
-
     if not sys.version_info < (3,):
         sys.stderr.write("This script is written in python 2.\n")
         sys.exit(1)
+
+    global AUTH_HEADER
+    parser = argparse.ArgumentParser()
+    args = parser.parse_args()
 
     grid_ip = raw_input('Grid Master IP: ')
     user = raw_input('User: ')
