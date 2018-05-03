@@ -113,7 +113,7 @@ def main():
     for nv in nv_lst:
         print '[%s]' % nv
 
-        nw_params = urllib.urlencode({'network_view': nv,
+        nw_params = urllib.urlencode({'network_view': nv.encode('utf-8'),
                                       '_return_fields': 'network',
                                       'unmanaged': 'true',
                                       '_return_type': 'json-pretty'})
