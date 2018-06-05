@@ -31,6 +31,10 @@ def read_wapi(conn, url):
     except:
         print data.status, data.reason
         sys.exit(1)
+    if type(parsed) is dict:
+        if "Error" in parsed:
+            print parsed["Error"]
+        return []
     return parsed
 
 
