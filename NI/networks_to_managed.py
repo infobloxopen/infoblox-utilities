@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # Copyright (c) 2018 Infoblox Inc. All Rights Reserved.
-# version 1.0.0 2018-05-30 
+# version 1.0.1 2018-06-05
 
 '''
 networks_to_managed.py
@@ -16,6 +16,7 @@ import argparse
 import getpass
 
 AUTH_HEADER = ''
+error_flag = False
 
 
 def read_wapi(conn, url):
@@ -31,9 +32,10 @@ def read_wapi(conn, url):
     except:
         print data.status, data.reason
         sys.exit(1)
-    if type(parsed) is dict:
-        if "Error" in parsed:
-            print parsed["Error"]
+    if type(parsed) is dict and "Error" in parsed:
+        global error_flag
+        error_flag = True
+        print parsed["Error"]
         return []
     return parsed
 
@@ -252,7 +254,7 @@ def main():
             post_data = ''
         print 'Processing "%s" network view finished.' % nv
 
-    print 'Completed!'
+    print 'Completed%s!' % (error_flag and ' with errors' or '')
     conn.close()
 
 if __name__ == '__main__':
