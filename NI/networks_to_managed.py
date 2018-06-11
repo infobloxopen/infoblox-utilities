@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # Copyright (c) 2018 Infoblox Inc. All Rights Reserved.
-# version 1.0.1 2018-06-05
+# version 1.0.2 2018-06-11
 
 '''
 networks_to_managed.py
@@ -35,7 +35,7 @@ def read_wapi(conn, url):
     if type(parsed) is dict and "Error" in parsed:
         global error_flag
         error_flag = True
-        print parsed["Error"]
+        print 'Error: ' + parsed["Error"]
         return []
     return parsed
 
@@ -169,6 +169,7 @@ def main():
         nw_params = urllib.urlencode({'network_view': nv.encode('utf-8'),
                                       '_return_fields': 'network',
                                       'unmanaged': 'true',
+                                      '_max_results': sys.maxint,
                                       '_return_type': 'json-pretty'})
 
         # ... for unmanaged ipv4 networks
